@@ -32,6 +32,7 @@ import (
 	lens "github.com/strangelove-ventures/lens/client"
 	tmtypes "github.com/tendermint/tendermint/types"
 	ethcodec "github.com/tharsis/ethermint/crypto/codec"
+	"github.com/tharsis/ethermint/crypto/ethsecp256k1"
 	ethhd "github.com/tharsis/ethermint/crypto/hd"
 	ethermint "github.com/tharsis/ethermint/types"
 
@@ -171,7 +172,10 @@ func (pc CosmosProviderConfig) NewProvider(log *zap.Logger, homepath string, deb
 func registerEthermintCodec(cdc *lens.Codec) {
 	ethcodec.RegisterInterfaces(cdc.InterfaceRegistry)
 	ethermint.RegisterInterfaces(cdc.InterfaceRegistry)
-	ethcodec.RegisterCrypto(cdc.Amino)
+	cdc.Amino.RegisterConcrete(&ethsecp256k1.PubKey{},
+		ethsecp256k1.PubKeyName, nil)
+	cdc.Amino.RegisterConcrete(&ethsecp256k1.PrivKey{},
+		ethsecp256k1.PrivKeyName, nil)
 }
 
 // ChainClientConfig builds a ChainClientConfig struct from a CosmosProviderConfig, this is used
