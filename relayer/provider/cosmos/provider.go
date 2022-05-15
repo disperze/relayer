@@ -31,6 +31,10 @@ import (
 	"github.com/gogo/protobuf/proto"
 	lens "github.com/strangelove-ventures/lens/client"
 	tmtypes "github.com/tendermint/tendermint/types"
+	ethcodec "github.com/tharsis/ethermint/crypto/codec"
+	ethhd "github.com/tharsis/ethermint/crypto/hd"
+	ethermint "github.com/tharsis/ethermint/types"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -148,16 +152,26 @@ func (pc CosmosProviderConfig) NewProvider(log *zap.Logger, homepath string, deb
 		homepath,
 		os.Stdin,
 		os.Stdout,
+		ethhd.EthSecp256k1Option(),
 	)
+
 	if err != nil {
 		return nil, err
 	}
+	registerEthermintCodec(&cc.Codec)
+
 	return &CosmosProvider{
 		log: log,
 
 		ChainClient: *cc,
 		PCfg:        pc,
 	}, nil
+}
+
+func registerEthermintCodec(cdc *lens.Codec) {
+	ethcodec.RegisterInterfaces(cdc.InterfaceRegistry)
+	ethermint.RegisterInterfaces(cdc.InterfaceRegistry)
+	ethcodec.RegisterCrypto(cdc.Amino)
 }
 
 // ChainClientConfig builds a ChainClientConfig struct from a CosmosProviderConfig, this is used
@@ -175,7 +189,10 @@ func ChainClientConfig(pcfg *CosmosProviderConfig) *lens.ChainClientConfig {
 		Timeout:        pcfg.Timeout,
 		OutputFormat:   pcfg.OutputFormat,
 		SignModeStr:    pcfg.SignModeStr,
-		Modules:        append([]module.AppModuleBasic{}, lens.ModuleBasics...),
+		Modules: append(
+			[]module.AppModuleBasic{},
+			lens.ModuleBasics...,
+		),
 	}
 }
 
