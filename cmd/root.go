@@ -30,12 +30,15 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/codec/legacy"
 	zaplogfmt "github.com/jsternberg/zap-logfmt"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"golang.org/x/term"
+
+	"github.com/tharsis/ethermint/crypto/ethsecp256k1"
 )
 
 const (
@@ -65,6 +68,12 @@ func NewRootCmd(log *zap.Logger) *cobra.Command {
 
 		Log: log,
 	}
+
+	// TODO: find a better place, see cosmos-sdk pubkey
+	legacy.Cdc.RegisterConcrete(&ethsecp256k1.PubKey{},
+		ethsecp256k1.PubKeyName, nil)
+	legacy.Cdc.RegisterConcrete(&ethsecp256k1.PrivKey{},
+		ethsecp256k1.PrivKeyName, nil)
 
 	// RootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{

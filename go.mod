@@ -137,3 +137,5 @@ require (
 replace github.com/keybase/go-keychain => github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4
 
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.2-alpha.regen.4
+
+replace github.com/strangelove-ventures/lens => github.com/disperze/lens v0.3.1-0.20220515173616-e1d3daca3638
