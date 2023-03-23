@@ -391,6 +391,7 @@ func (ccp *CosmosChainProcessor) queryCycle(ctx context.Context, persistence *qu
 
 		base64Encoded := ccp.chainProvider.cometLegacyEncoding
 
+		fmt.Printf("GoN: Getting events from Block %d\n", i)
 		blockMsgs := ccp.ibcMessagesFromBlockEvents(
 			blockRes.BeginBlockEvents,
 			blockRes.EndBlockEvents,
@@ -406,8 +407,10 @@ func (ccp *CosmosChainProcessor) queryCycle(ctx context.Context, persistence *qu
 				// tx was not successful
 				continue
 			}
+			fmt.Printf("GoN: Getting events from Tx wiht gas %d\n", tx.GasWanted)
 			messages := ibcMessagesFromEvents(ccp.log, tx.Events, chainID, heightUint64, base64Encoded)
 
+			fmt.Printf("GoN: Got %d messages\n", len(messages))
 			for _, m := range messages {
 				ccp.handleMessage(ctx, m, ibcMessagesCache)
 			}
