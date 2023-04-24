@@ -19,6 +19,7 @@ import (
 	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -27,6 +28,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
+	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	conntypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
@@ -36,6 +38,7 @@ import (
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 	tmclient "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	strideicqtypes "github.com/cosmos/relayer/v2/relayer/chains/cosmos/stride"
+	ethermintcodecs "github.com/cosmos/relayer/v2/relayer/codecs/ethermint"
 	"github.com/cosmos/relayer/v2/relayer/provider"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -377,6 +380,21 @@ func (cc *CosmosProvider) buildMessages(ctx context.Context, msgs []provider.Rel
 	}
 
 	done := cc.SetSDKContext()
+
+	if strings.HasPrefix(txf.ChainID(), "evmos_") {
+		builder, ok := txb.(authtx.ExtensionOptionsTxBuilder)
+		if !ok {
+			return nil, 0, sdk.Coins{}, fmt.Errorf("can't get extension builder")
+		}
+		option, err := codectypes.NewAnyWithValue(&ethermintcodecs.ExtensionOptionDynamicFeeTx{
+			MaxPriorityPrice: sdk.ZeroInt(),
+		})
+		if err != nil {
+			return nil, 0, sdk.Coins{}, err
+		}
+
+		builder.SetExtensionOptions(option)
+	}
 
 	if err := retry.Do(func() error {
 		if err := tx.Sign(txf, cc.PCfg.Key, txb, false); err != nil {
